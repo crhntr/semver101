@@ -1,0 +1,97 @@
+{{- /*gotype: github.com/crhntr/semver101.resultData*/ -}}
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="utf-8">
+  <title>Semantic Version Checker</title>
+  <script src="https://unpkg.com/htmx.org@2.0.1"
+          integrity="sha384-QWGpdj554B4ETpJJC9z+ZHJcA/i59TyjxEPXiiUgN2WmTyV5OEZWCD6gQhgkdpB/"
+          crossorigin="anonymous">
+  </script>
+  <style>
+      html, body {
+          margin: 0;
+          font-size: 16px
+      }
+
+      input {
+          font-size: 2rem;
+          width: calc(100vw - 1rem);
+          box-sizing: border-box;
+      }
+
+      textarea {
+          font-size: 1.5rem;
+          resize: vertical;
+          border: none;
+          width: calc(100vw - 1rem);
+          box-sizing: border-box;
+          min-height: 10vh;
+          background: lightgray;
+      }
+
+      textarea#versions {
+          width: 100vw;
+      }
+
+      .result {
+          padding: 1rem;
+      }
+
+      .result.is-match {
+          border-left: 1rem solid lightgreen;
+      }
+
+      .result:not(.is-match) {
+          border-left: 1rem solid lightcoral;
+      }
+  </style>
+</head>
+<body>
+<form>
+  <input name="constraints"
+         aria-label="Version constraint"
+         placeholder="Write a version constraint here..."
+         value="{{.Constraints}}"
+
+         hx-trigger="change"
+         hx-get="{{.PathPrefix}}/results"
+         hx-target="#results"
+         hx-swap="outerHTML"
+         hx-include="[name='versions']">
+  <textarea name="versions"
+         aria-label="Versions to test (separated by new lines)"
+         placeholder="List versions here..."
+
+         hx-trigger="change"
+         hx-get="{{.PathPrefix}}/results"
+         hx-target="#results"
+         hx-swap="outerHTML"
+         hx-include="[name='constraints']">
+           {{- range .Versions}}{{printf "%s\n" . }}{{end -}}
+        </textarea>
+</form>
+
+{{block "result" .}}
+  <div id="results">
+      {{range .Results}}
+        <div class="result {{if .IsMatch}}is-match{{end}}">
+          <strong>{{.Version}}</strong>
+          <em>{{if .IsMatch}} matches{{else}} does not match{{end}}</em>
+            {{if .Error}}
+              <div>Error {{.Error}}</div>{{end}}
+          <ul>
+              {{- range .Reasons}}
+                <li>{{.}}</li>
+              {{end -}}
+          </ul>
+        </div>
+      {{end}}
+  </div>
+{{end}}
+
+<a href="https://github.com/Masterminds/semver" target="_blank">
+  The semantic version and version constraint parser is Masterminds/semver.
+</a>
+</body>
+</html>
