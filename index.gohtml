@@ -1,4 +1,4 @@
-{{- /*gotype: github.com/crhntr/semver101.resultData*/ -}}
+{{- /* gotype:github.com/crhntr/semver101.Data */ -}}
 <!DOCTYPE html>
 <html lang="en-US">
 <head>
@@ -55,7 +55,7 @@
          value="{{.Constraints}}"
 
          hx-trigger="change"
-         hx-get="{{.PathPrefix}}/results"
+         hx-post="{{.Path}}"
          hx-target="#results"
          hx-swap="outerHTML"
          hx-include="[name='versions']">
@@ -64,7 +64,7 @@
          placeholder="List versions here..."
 
          hx-trigger="change"
-         hx-get="{{.PathPrefix}}/results"
+         hx-post="{{.Path}}"
          hx-target="#results"
          hx-swap="outerHTML"
          hx-include="[name='constraints']">

@@ -11,33 +11,34 @@ import (
 	"github.com/Masterminds/semver/v3"
 )
 
-func Handler(prefix string) http.Handler {
-	mux := http.NewServeMux()
-	mux.HandleFunc("GET /", func(res http.ResponseWriter, req *http.Request) {
+func HandleGet(endpointPath string) http.HandlerFunc {
+	return func(res http.ResponseWriter, req *http.Request) {
 		inData, ok := newParameters(res, req)
 		if !ok {
 			return
 		}
-		outData, err := newResultData(req.Context(), inData, prefix)
+		outData, err := newResultData(req.Context(), inData, endpointPath)
 		if err != nil {
 			http.Error(res, err.Error(), http.StatusBadRequest)
 			return
 		}
 		render(res, req, outData, "semver202")
-	})
-	mux.HandleFunc("GET /results", func(res http.ResponseWriter, req *http.Request) {
+	}
+}
+
+func HandlePost(endpointPath string) http.HandlerFunc {
+	return func(res http.ResponseWriter, req *http.Request) {
 		inData, ok := newParameters(res, req)
 		if !ok {
 			return
 		}
-		outData, err := newResultData(req.Context(), inData, prefix)
+		outData, err := newResultData(req.Context(), inData, endpointPath)
 		if err != nil {
 			http.Error(res, err.Error(), http.StatusBadRequest)
 			return
 		}
 		render(res, req, outData, "result")
-	})
-	return http.StripPrefix(prefix, mux)
+	}
 }
 
 type parameters struct {
@@ -54,17 +55,13 @@ func newParameters(res http.ResponseWriter, req *http.Request) (parameters, bool
 		constraintsParamName = "constraints"
 		versionsQueryParam   = "versions"
 	)
-	var (
-		constraints = ">= 4.0.6, < 5.3.0"
-		versions    = "4.0.6-build.3\n4.0.6\n4.2.0\n5.3.0\n5.3.0\n5.40.0"
-	)
-	urlQuery := req.URL.Query()
-	if urlQuery.Has(constraintsParamName) {
-		constraints = urlQuery.Get(constraintsParamName)
+	var constraints, versions string
+	_ = req.ParseForm()
+	constraints = req.Form.Get(constraintsParamName)
+	if constraints == "" {
+		constraints = "*"
 	}
-	if urlQuery.Has(versionsQueryParam) {
-		versions = urlQuery.Get(versionsQueryParam)
-	}
+	versions = req.Form.Get(versionsQueryParam)
 	c, err := semver.NewConstraint(constraints)
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusBadRequest)
@@ -95,14 +92,14 @@ type resultDataRow struct {
 
 type resultData struct {
 	parameters
-	Results    []resultDataRow
-	PathPrefix string
+	Results []resultDataRow
+	Path    string
 }
 
-func newResultData(_ context.Context, in parameters, pathPrefix string) (resultData, error) {
+func newResultData(_ context.Context, in parameters, endpointPath string) (resultData, error) {
 	out := resultData{
 		parameters: in,
-		PathPrefix: pathPrefix,
+		Path:       endpointPath,
 	}
 	for _, vl := range in.Versions {
 		if vl == "" {

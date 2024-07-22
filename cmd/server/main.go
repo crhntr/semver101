@@ -10,5 +10,13 @@ import (
 )
 
 func main() {
-	log.Fatal(http.ListenAndServe(":"+cmp.Or(os.Getenv("PORT"), "8080"), semver101.Handler("")))
+	addr := ":" + cmp.Or(os.Getenv("PORT"), "8080")
+	log.Fatal(http.ListenAndServe(addr, routes()))
+}
+
+func routes() http.Handler {
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /", semver101.HandleGet("/"))
+	mux.HandleFunc("POST /", semver101.HandlePost("/"))
+	return mux
 }
